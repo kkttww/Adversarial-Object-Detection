@@ -31,8 +31,8 @@ np.set_printoptions(suppress=True)
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 
-from yolov3 import yolov3_anchors, yolov3_tiny_anchors
-from yolov3 import yolo_process_output, draw_bounding_box
+from yolov3 import yolov3_anchors, yolov3_tiny_anchors, yolov4_anchors, yolov4_tiny_anchors
+from yolov3 import yolo_process_output, draw_bounding_box, ANCHOR_REGISTRY
 
 classes = []
 adv_detect = None
@@ -184,7 +184,7 @@ def adversarial_detection_thread():
 
         # Yolo inference
         input_cv_image, outs, stats = adv_detect.attack(input_cv_image)
-        boxes, class_ids, confidences = yolo_process_output(outs, yolov3_tiny_anchors, len(classes))
+        boxes, class_ids, confidences = yolo_process_output(outs, adv_detect.anchors, len(classes))
 
         # Draw bounding boxes
         out_img = draw_bounding_box(input_cv_image, boxes, confidences, class_ids, classes, colors)
@@ -250,6 +250,30 @@ def websocket_server_thread():
     debug=False             # Disable debug output
     )
 
+def get_model_type(model_path):
+    #Determine model type from filename
+    model_name = os.path.basename(model_path).lower()
+    if 'yolov3-tiny' in model_name:
+        return 'yolov3_tiny'
+    elif 'yolov3' in model_name:
+        return 'yolov3'
+    elif 'yolov4-tiny' in model_name:
+        return 'yolov4_tiny'
+    elif 'yolov4' in model_name:
+        return 'yolov4'
+    # Try to infer from model characteristics if name doesn't match
+    try:
+        model = load_model(model_path)
+        num_outputs = len(model.outputs)
+        if num_outputs == 3:  # Full YOLOv3/v4 has 3 outputs
+            return 'yolov3'  # or 'yolov4' if you can distinguish them
+        elif num_outputs == 2:  # Tiny versions have 2 outputs
+            return 'yolov3_tiny'  # or 'yolov4_tiny'
+    except:
+        pass
+    
+    raise ValueError(f"Could not determine model type from filename: {model_name}")
+
 if __name__ == '__main__':
     # Parse arguments
     parser = argparse.ArgumentParser(description='Adversarial Detection')
@@ -275,13 +299,19 @@ if __name__ == '__main__':
     with open(args.class_name) as f:
         content = f.readlines()
     classes = [x.strip() for x in content] 
-
+    
     # Create a results dictionary
     results = {
         'parameters': vars(args),
         'metrics_over_time': [],
     }
 
+    model_type = get_model_type(args.model)
+    anchors = ANCHOR_REGISTRY.get(model_type)
+    
+    if anchors is None:
+        raise ValueError(f"No anchors defined for model type: {model_type}")
+    
     try:
         # Initialize with experiment parameters
         adv_detect = AdversarialDetection(
@@ -290,7 +320,8 @@ if __name__ == '__main__':
             args.monochrome, 
             classes,
             fixed_area=fixed_area,
-            max_iterations=args.max_iter
+            max_iterations=args.max_iter,
+            anchors=anchors
         )
 
         t1 = threading.Thread(target=websocket_server_thread, daemon=True)

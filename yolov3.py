@@ -10,6 +10,8 @@ from PIL import Image
 
 YOLOV3_INPUT_SIZE = 416
 
+
+
 yolov3_anchors = [ 
             [[116,90],  [156,198],  [373,326]], 
             [[30,61],  [62,45],  [59,119]],  
@@ -31,6 +33,13 @@ yolov4_tiny_anchors = [
             [[81,82],  [135,169],  [344,319]],
             [[10,14],  [23,27],  [37,58]]
             ]
+
+ANCHOR_REGISTRY = {
+    'yolov3': yolov3_anchors,
+    'yolov3_tiny': yolov3_tiny_anchors,
+    'yolov4': yolov4_anchors,
+    'yolov4_tiny': yolov4_tiny_anchors
+}
 
 def letterbox_resize(image, target_size, return_padding_info=False):
     """

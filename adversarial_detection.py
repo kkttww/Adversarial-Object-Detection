@@ -2,10 +2,10 @@
 import numpy as np
 np.set_printoptions(suppress=True)
 from keras.models import load_model
-from yolov3 import yolo_process_output, yolov3_tiny_anchors
+from yolov3 import yolo_process_output, yolov3_tiny_anchors, yolov3_anchors, yolov4_tiny_anchors, yolov4_anchors
 
 class AdversarialDetection:
-    def __init__(self, model, attack_type, monochrome, classes, xi=8/255.0, lr= 1 /255.0, fixed_area=None, max_iterations=None):
+    def __init__(self, model, attack_type, monochrome, classes, xi=8/255.0, lr= 1 /255.0, fixed_area=None, max_iterations=None, anchors=None):
         import tensorflow as tf
         tf.compat.v1.disable_eager_execution()
         import keras.backend as K
@@ -40,6 +40,7 @@ class AdversarialDetection:
             self.adv_patch_boxes = [self.fixed_area]
             print(f"Fixed attack area set to: {self.fixed_area}")
         self.max_iterations = max_iterations  # User-set iteration limit
+        self.anchors = anchors
 
         self.model = load_model(model)
         self.model.summary()
@@ -83,7 +84,7 @@ class AdversarialDetection:
                 and self.adv_patch_boxes == []):
                 original_output = self.sess.run(self.model.output, 
                                             feed_dict={self.model.input: np.array([input_cv_image])})
-                boxes, _, _ = yolo_process_output(original_output, yolov3_tiny_anchors, self.num_classes)
+                boxes, _, _ = yolo_process_output(original_output, self.anchors, self.num_classes)
                 self.original_boxes_count = len(boxes) if boxes is not None else 0
 
             # Draw each adversarial patch on the input image
@@ -127,7 +128,7 @@ class AdversarialDetection:
             # Get adversarial output
             adv_output = self.sess.run(self.model.output, 
                                     feed_dict={self.model.input: np.array([input_cv_image])})
-            boxes, _, _ = yolo_process_output(adv_output, yolov3_tiny_anchors, self.num_classes)
+            boxes, _, _ = yolo_process_output(adv_output, self.anchors, self.num_classes)
             if self.results_saved == False:
                 self.current_boxes_count = len(boxes) if boxes is not None else 0
             
