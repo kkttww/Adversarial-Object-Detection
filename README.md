@@ -6,7 +6,7 @@
 
 Generating adversarial patch is as easy as **drag and drop**.
 
-![](doc/attack.png)
+![](doc/bigperturb.png)
 
 ### Quick Start
 
