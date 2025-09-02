@@ -2,8 +2,6 @@
 
 > Attacking Object Detection Systems in Real Time
 
-[[ Talk ]](https://detection.wuhanstudio.uk) [[ Video ]](https://youtu.be/zJZ1aNlXsMU) [[ Paper ]](https://arxiv.org/abs/2209.01962) [[ Code ]](https://github.com/wuhanstudio/adversarial-detection)
-
 ### Overview
 
 Generating adversarial patch is as easy as **drag and drop**.
@@ -16,7 +14,6 @@ You may use [anaconda](https://www.continuum.io/downloads) or [miniconda](https:
 
 ```
 $ git clone https://github.com/kkttww/Adversarial-Object-Detection
-$ cd adversarial-detection
 
 $ # GPU
 $ conda env create -f environment_gpu.yml
@@ -27,4 +24,3 @@ $ python detect.py --model model/yolov3-tiny.h5 --class_name coco_classes.txt
 
 The web page will be available at: http://localhost:9090/
 
-That's it!
